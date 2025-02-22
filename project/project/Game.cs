@@ -131,9 +131,9 @@ namespace project
             camera = new Game.Camera(0, 50, 0);
             Shape.models.Add(new Shape("Cube.obj", randomColor()));
             Shape.models.Last().centre += new Vector3(-500000, -50000000, -10000000);
-            Shape.models.Add(new Shape("Cube.obj", Color.SaddleBrown));
+            Shape.models.Add(new Shape("hex.obj", Color.SaddleBrown));
             Shape.models.Last().centre += new Vector3(0, -0.05f, 0);
-            Shape.models.Last().scale = new Vector3(500, 0, 500);
+            Shape.models.Last().scale = new Vector3(850, 0, 850);
         }
 
 
@@ -167,7 +167,7 @@ namespace project
 
             for (int i = 0; i < Hex.hexes.Count; i++)
             {
-                (int, int) dddd = (Hex.hexes[i].q, Hex.hexes[i].r);
+                //(int, int) dddd = (Hex.hexes[i].q, Hex.hexes[i].r);
                 //float f = Perlin.SampleNoise(dddd.Item1 / 32f, dddd.Item2 / 32f, 1, 1, 8, 2f, offsets);
                 //f = -(float)Math.Log(f, Math.E);
                 //f *= 40;
@@ -213,7 +213,6 @@ namespace project
 
                 //Console.WriteLine(f);
 
-
                 Tile.Hexagons.Add(new Tile((Hex.hexes[i].q, Hex.hexes[i].r)));
 
             }
@@ -236,6 +235,7 @@ namespace project
 
             public Tile((int,int)qr)
             {
+                hex.angle = new Vector3(0, (float)Math.PI / 2, 0);
                 this.qr = qr;
                 SetHeight();
                 SetWorldCentre();
@@ -245,12 +245,22 @@ namespace project
             public void SetColor()
             {
                 Color C;
-                if(height < 27.01f)
+                if(height < 27.01f*1.25f)
                 {
-                    C = randomColor(Color.FromArgb(255,41,41,230));
+                    if(height < 26.01f*1.25f)
+                    {
+                        C = randomColor(Color.FromArgb(255, 10, 159, 235));
+                        height -= 0.375f;
+                    }
+                    else
+                    {
+                        C = randomColor(Color.FromArgb(255, 120, 208, 235));
+                        height -= 0.75f;
+                    }
                     type = pieces.Water;
+
                 }
-                else if (height > 27.05f && height < 28.55f)
+                else if (height > 27.05f * 1.25f && height < 28.55f * 1.25f)
                 {
                     C = randomColor(Color.FromArgb(255, 231, 196, 150));
                     type = pieces.Shore;
@@ -268,7 +278,7 @@ namespace project
             {
                 float f = Perlin.SampleNoise(qr.Item1 / 32f, qr.Item2 / 32f, 1, 1, 8, 2f, offsets);
                 f = -(float)Math.Log(f, Math.E);
-                f *= 40;
+                f *= 50;
                 height = f;
             }
             public void SetWorldCentre()
@@ -640,7 +650,7 @@ namespace project
                 Vector3 forw = this.CamForward();
                 forw[0] += this.pos[0]; forw[1] += this.pos[1]; forw[2] += this.pos[2];
                 Matrix4 camer = Matrix4.LookAt(new Vector3(this.pos[0], this.pos[1], this.pos[2]), new Vector3(forw[0], forw[1], forw[2]), new Vector3(0, 1, 0));
-                camer *= Matrix4.CreatePerspectiveFieldOfView(fov, screenWidth / (float)screenHeight, 0.5f,1500f);
+                camer *= Matrix4.CreatePerspectiveFieldOfView(fov, screenWidth / (float)screenHeight, 0.5f,2000f);
                 return camer;
             }
             public void FreeCam(KeyboardState input)

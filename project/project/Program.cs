@@ -19,11 +19,11 @@ namespace project
 
         static void Main(string[] args)
         {
-            for (int i = -20; i <= 20; i++)
+            for (int i = -40; i <= 40; i++)
             {
-                for (int j = -20; j <= 20; j++)
+                for (int j = -40; j <= 40; j++)
                 {
-                    if (Hex.distance((i, j), (0, 0)) <= 20)
+                    if (Hex.distance((i, j), (0, 0)) <= 40)
                     {
                         Hex.hexes.Add(new Hex(i, j));
                     }

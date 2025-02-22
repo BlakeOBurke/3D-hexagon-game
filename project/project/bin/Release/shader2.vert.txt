@@ -1,0 +1,26 @@
+#version 330 core
+layout (location = 0) in vec3 aPos;   // the position variable has attribute position 0
+layout (location = 1) in vec3 aColor; // the color variable has attribute position 1
+  
+out vec3 ourColor; // output a color to the fragment shader
+out float dist;
+
+uniform mat4 projection;
+uniform float distance;
+uniform vec3 HexCol;
+
+void main()
+{
+    mat4 A = mat4(1,0,0,0,0,distance,0,0,0,0,1,0,0,0,0,1)*projection;
+    gl_Position = vec4(aPos,1) * A;
+    if(aPos.y < 0.001)
+    {
+        ourColor = vec3(1,1,1) * HexCol;
+    }
+    else
+    {
+        ourColor = aColor*HexCol; // set ourColor to the input color from the vertex data
+    }
+
+    dist = distance;
+}      
