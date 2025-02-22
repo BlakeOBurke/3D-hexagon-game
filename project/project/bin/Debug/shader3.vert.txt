@@ -13,8 +13,8 @@ uniform vec3 HexCol;
 
 void main()
 {
-    gl_Position = vec4(aPos+vec3(0,-sin((pos.z+time+pos.x)/80)*0.2+cos((pos.x+pos.z+time)/80)*0.2,0),1) * projection;
+    gl_Position = vec4(aPos+vec3(0,-sin((aPos.z+time+aPos.x)/80)*0.2+cos((aPos.x+aPos.z+time)/80)*0.2,0),1) * projection;
     ourColor = HexCol; // set ourColor to the input color from the vertex data
     Time = time;
-    Height = -sin((pos.z+time+pos.x)/80)*0.5+cos((pos.x+pos.z+time)/80)*0.5;
+    Height = -sin((aPos.z+time+pos.x)/80)*0.5+cos((aPos.x+pos.z+time)/80)*0.5;
 }      

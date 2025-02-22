@@ -56,11 +56,11 @@ namespace project
         {
             return (A.Item1 + B.Item1, A.Item2 + B.Item2);
         }
-        (int, int) add((int, int) B)
+        public (int, int) add((int, int) B)
         {
             return (this.q + B.Item1, this.r + B.Item2);
         }
-        static (int, int) subtract((int, int) A, (int, int) B)
+        public static(int, int) subtract((int, int) A, (int, int) B)
         {
             return (A.Item1 - B.Item1, A.Item2 - B.Item2);
         }
@@ -214,7 +214,6 @@ namespace project
                 //}
                 //Hexagon.Hexagons.Last().centre += new Vector3(0, 3*f, 0);
 
-                //Console.WriteLine(f);
 
                 Tile.Hexagons.Add((Hex.hexes[i].q, Hex.hexes[i].r),new Tile((Hex.hexes[i].q, Hex.hexes[i].r)));
 
@@ -226,10 +225,10 @@ namespace project
         public static List<(int,int)> DisplayMoves = new List<(int, int)>();
 
         public static KeyboardState currentKey = Keyboard.GetState();
-
+        public static string turnStatus = "move";
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            Console.WriteLine(this.RenderFrequency);
+            //Console.WriteLine(this.RenderFrequency);
             shader = new Shader("shader.vert.txt", "shader.frag.txt");
             shader2 = new Shader("shader2.vert.txt", "shader2.frag.txt");
             shaderWave = new Shader("shader3.vert.txt", "shader3.frag.txt");
@@ -274,7 +273,14 @@ namespace project
                 }
                 else
                 {
-                    Tile.UniformVec3(shader2, "Hue", new Vector3(400 / 255f, 200 / 255f, 15 / 255f));
+                    if(turnStatus == "move")
+                    {
+                        Tile.UniformVec3(shader2, "Hue", new Vector3(400 / 255f, 200 / 255f, 15 / 255f));
+                    }
+                    else
+                    {
+                        Tile.UniformVec3(shader2, "Hue", new Vector3(400 / 255f, 40 / 255f, 15 / 255f));
+                    }
                 }
                 Tile.UniformFloat(shader2, "distance", 1);
 
@@ -460,9 +466,6 @@ namespace project
                     cursorMov -= 1;
                 }
             }
-
-
-            //Console.WriteLine(camera.pos.X);
 
 
             totalUpdateCount++;
