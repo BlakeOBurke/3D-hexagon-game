@@ -1,0 +1,15 @@
+#version 330 core
+layout (location = 0) in vec3 aPos;   // the position variable has attribute position 0
+layout (location = 1) in vec3 aColor; // the color variable has attribute position 1
+  
+out vec3 ourColor; // output a color to the fragment shader
+
+uniform mat4 projection;
+uniform float time;
+uniform vec3 pos;
+
+void main()
+{
+    gl_Position = vec4(aPos+vec3(0,sin((pos.x+time+pos.z)/120)*0.25 + cos((pos.x+time+pos.z)/120)*0.25,0),1) * projection;
+    ourColor = aColor; // set ourColor to the input color from the vertex data
+}      

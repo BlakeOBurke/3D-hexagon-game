@@ -64,18 +64,22 @@ namespace project
         {
             return (A.Item1 - B.Item1, A.Item2 - B.Item2);
         }
-        int distance((int, int) A, (int, int) B)
+        public static int distance((int, int) A, (int, int) B)
         {
             return (Math.Abs(A.Item1 - B.Item1) + Math.Abs(A.Item1 + A.Item2 - B.Item1 - B.Item2) + Math.Abs(A.Item2 - B.Item2)) / 2;
         }
 
-        static (int, int) direction(int direction)
+        public static (int, int) direction(int direction)
         {//in range 0->5
             return axial_addjacent[direction];
         }
-        static (int, int) neighbor(Hex A, (int, int) direction)
+        public static (int, int) neighbor(Hex A, (int, int) direction)
         {
             return A.add(direction);
+        }
+        public static (int, int) neighbor((int,int) A, (int, int) direction)
+        {
+            return add(direction,A);
         }
         (int, int) neighbor((int, int) direction)
         {
@@ -111,39 +115,51 @@ namespace project
         static bool quickMov = false;
         int totalframeCount;
 
-        Game.Camera camera = new Game.Camera(0, 0, 0);
+        Game.Camera camera = new Camera(0, 50, 0);
 
-        static Shader shader;
-        static Shader shader2;
+        Shader shader;
+        Shader shader2;
+        Shader shaderWave;
 
         //in the constructors there are many arbitrary re-assignments. this is because some of these are static to the Game class and would persist between games, reseting them fixes this.
         public Game(int width, int height) : base(width, height, GraphicsMode.Default, "game")
         {
             screenHeight = width; screenWidth = height; quickMov = false; mouseX = 0; mouseY = 0;
             rnd = new Random();
-            camera = new Game.Camera(0, 0, 0);
+            camera = new Game.Camera(0, 50, 0);
             Shape.models.Add(new Shape("Cube.obj", randomColor()));
-            Shape.models.Last().centre += new Vector3(-5, -5, -10);
+            Shape.models.Last().centre += new Vector3(-500000, -50000000, -10000000);
+            Shape.models.Add(new Shape("Cube.obj", Color.SaddleBrown));
+            Shape.models.Last().centre += new Vector3(0, -0.05f, 0);
+            Shape.models.Last().scale = new Vector3(500, 0, 500);
         }
 
 
         Color randomColor()        //self explanatory
         {
-            return Color.FromArgb(255,rnd.Next(50, 205), rnd.Next(50, 205), rnd.Next(50, 205));
+            return Color.FromArgb(255,rnd.Next(20, 60), rnd.Next(130, 230), rnd.Next(50, 75));
         }
 
 
-
+        static Random rand = new Random();
+        Color randomColor(Color col)        //self explanatory
+        {
+            return Color.FromArgb(255, Math.Min(col.R+rand.Next(-10,20),255), Math.Min(col.G + rand.Next(-10,20), 255), Math.Min(col.B + rand.Next(-10,20), 255));
+        }
 
         protected override void OnLoad(EventArgs e)
         {
+            Random XXX = new Random();
+            (int, int) offsets = (XXX.Next(0, 5000), XXX.Next(0, 5000));
+
+
             base.OnLoad(e);
 
-            GL.ClearColor(Color.Coral);
+            GL.ClearColor(Color.CornflowerBlue);
 
             shader = new Shader("shader.vert.txt", "shader.frag.txt");
-            shader2 = new Shader("shader.vert.txt", "shader2.frag.txt");
-
+            shader2 = new Shader("shader2.vert.txt", "shader2.frag.txt");
+            shaderWave = new Shader("shader3.vert.txt", "shader3.frag.txt");
 
             GL.Enable(EnableCap.DepthTest);
 
@@ -152,17 +168,47 @@ namespace project
 
             for (int i = 0; i < Hex.hexes.Count; i++)
             {
+                (int, int) dddd = (Hex.hexes[i].q, Hex.hexes[i].r);
+                float f = Perlin.SampleNoise(dddd.Item1 / 32f, dddd.Item2 / 32f, 1, 1, 8, 2f, offsets);
+                f = -(float)Math.Log(f, Math.E);
+                f *= 40;
+                if (f < 27f)
+                {
+                    f = 27f;
+                }
+
                 if (Hex.hexes[i].q == 0 && Hex.hexes[i].r == 0)
                 {
-                    Hexagon.Hexagons.Add(new Hexagon("hex.obj", Color.Red, (Hex.hexes[i].q, Hex.hexes[i].r)));
+                    Hexagon.Hexagons.Add(new Hexagon("hex2.obj.txt", Color.Red, (Hex.hexes[i].q, Hex.hexes[i].r)));
                 }
                 else
                 {
-                    Hexagon.Hexagons.Add(new Hexagon("hex.obj", randomColor(), (Hex.hexes[i].q, Hex.hexes[i].r)));
+                    pieces piece = pieces.Water;
+                    Color coller = randomColor();
+                    if(f <= 27.01f)
+                    {
+                        coller = randomColor(Color.FromArgb(255,41,41,230));
+                    }
+                    else if(f > 27.05f && f < 28.55f)
+                    {
+                        coller = randomColor(Color.FromArgb(255, 231, 196, 150));
+                        piece = pieces.Shore;
+                    }
+                    else
+                    {
+                        piece = pieces.Land;
+                    }
+                    Hexagon.Hexagons.Add(new Hexagon("hex2.obj.txt", coller, (Hex.hexes[i].q, Hex.hexes[i].r)));
+
+                    Hexagon.Hexagons.Last().type = piece;
                 }
-                Hexagon.Hexagons.Last().centre = new Vector3((Hex.hexes[i].q + Hex.hexes[i].r / 2f)*2 , -10, (float)Math.Sqrt(3) * (Hex.hexes[i].r));
+                Hexagon.Hexagons.Last().centre = 8*new Vector3((Hex.hexes[i].q + Hex.hexes[i].r / 2f)*2 , -1/2f, (float)Math.Sqrt(3) * (Hex.hexes[i].r));
                 Hexagon.Hexagons.Last().angle = new Vector3(0, (float)Math.PI / 2f, 0);
-                Hexagon.Hexagons.Last().scale *= 10/9f;
+                Hexagon.Hexagons.Last().scale *= 8f;
+                Hexagon.Hexagons.Last().scale *= new Vector3(1,2,1);
+                Hexagon.Hexagons.Last().centre += new Vector3(0, 3*f, 0);
+
+                Console.WriteLine(f);
             }
 
         }
@@ -190,13 +236,42 @@ namespace project
             {
                 Exit();
             }
+            if (input.IsKeyDown(Key.Up))
+            {
+                curHex = (curHex.Item1+1, curHex.Item2);
+                Thread.Sleep(100);
+            }
+            if (input.IsKeyDown(Key.Down))
+            {
+                curHex = (curHex.Item1-1, curHex.Item2); 
+                Thread.Sleep(100);
+            }
+            if (input.IsKeyDown(Key.Left))
+            {
+                curHex = (curHex.Item1, curHex.Item2-1);
+                Thread.Sleep(100);
+            }
+            if (input.IsKeyDown(Key.Right))
+            {
+                curHex = (curHex.Item1, curHex.Item2+1);
+                Thread.Sleep(100);
+            }
+
+
             Console.WriteLine(camera.pos.X);
+
+
+            totalframeCount++;
         }
 
-
+        static (int, int) curHex = (0, 0);
+        static int dister = 3;
         protected override void OnRenderFrame(FrameEventArgs e)
         {
 
+            shader = new Shader("shader.vert.txt", "shader.frag.txt");
+            shader2 = new Shader("shader2.vert.txt", "shader2.frag.txt");
+            shaderWave = new Shader("shader3.vert.txt", "shader3.frag.txt");
 
 
 
@@ -208,41 +283,91 @@ namespace project
 
             //draw it ALL!
 
-            List<(int,int)> A = Hex.RangeN((0, 0), 6);
+            List<(int, int)> A = Hex.RangeN(curHex, dister);
 
             List<Hexagon> B = Hexagon.Hexagons.Where(x => A.Contains((x.qr.Item1, x.qr.Item2))).ToList();
 
 
-            shader2 = new Shader("shader.vert.txt", "shader2.frag.txt");
+
 
             for (int i = 0; i < B.Count; i++)
             {
-                B[i].highlightDraw(camMatrix);
-            }
-            B[B.Count-1].highlightDraw(camMatrix);
-
-            shader = new Shader("shader.vert.txt", "shader.frag.txt");
-
-            for (int i = 0; i < Hexagon.Hexagons.Count(); i++)
-            {
-                if (!B.Contains(Hexagon.Hexagons[i]))
+                if (i == 0)
                 {
-                    Hexagon.Hexagons[i].drawObj(camMatrix);
+                    //B[i].UniformMatrix(shader2, camMatrix);
+                    //B[i].Draw(shader2);
+                    //B[i].UniformFloat(shader2, "distance", -0.15f * (dister + 1 - Hex.distance(B[i].qr, curHex)));
+                    shader2.Use();
+                }
+                Hexagon.UniformFloat(shader2, "distance", 2 + 0.5f * (float)Math.Log(dister + 1 - Hex.distance(B[i].qr, curHex)));
+
+                B[i].UniformMatrix(shader2, camMatrix);
+                B[i].Draw(shader2);
+
+                //for (int d = 0; d < 32; d++)
+                //{
+                //    B[i].UniformFloat(shader2, "distance", (dister + 1 - Hex.distance(B[i].qr, curHex)) - (d / 16f));
+                //    B[i].Draw(shader2);
+
+                //}
+
+                shader2.Dispose();
+
+            }
+
+
+
+            Hexagon[] water = Hexagon.Hexagons.Where(x => x.type == pieces.Water).ToArray();
+
+            for (int i = 0; i < water.Count(); i++)
+            {
+                
+                if(i == 0)
+                {
+                    shaderWave.Use();
+                }
+                if (!B.Contains(water[i]))
+                {
+                    water[i].UniformMatrix(shaderWave,camMatrix);
+                    Hexagon.UniformFloat(shaderWave,"time",totalframeCount);
+                    Hexagon.UniformVec3(shaderWave, "pos", water[i].centre);
+                    water[i].Draw(shaderWave);
                 }
             }
 
-            for (int i = 0; i < Shape.models.Count(); ++i)
+
+
+
+            Hexagon[] notWater = Hexagon.Hexagons.Where(x => x.type != pieces.Water).ToArray();
+
+            for (int i = 0; i < notWater.Count(); i++)
             {
-                Shape.models[i].drawObj(camMatrix);
+
+                if (i == 0)
+                {
+                    shader.Use();
+                }
+                if (!B.Contains(notWater[i]))
+                {
+                    notWater[i].UniformMatrix(shader, camMatrix);
+                    notWater[i].Draw(shader);
+                }
             }
 
 
-            //reset the shader
+            for (int i = 0; i < Shape.models.Count(); ++i)
+            {
+                Shape.models[i].drawObj(shader, camMatrix);
+            }
+
             shader.Dispose();
             shader2.Dispose();
+            shaderWave.Dispose();
+            //reset the shader
 
             this.SwapBuffers();
         }
+
 
 
         protected override void OnResize(EventArgs e)
@@ -312,7 +437,7 @@ namespace project
                 Vector3 forw = this.CamForward();
                 forw[0] += this.pos[0]; forw[1] += this.pos[1]; forw[2] += this.pos[2];
                 Matrix4 camer = Matrix4.LookAt(new Vector3(this.pos[0], this.pos[1], this.pos[2]), new Vector3(forw[0], forw[1], forw[2]), new Vector3(0, 1, 0));
-                camer *= Matrix4.CreatePerspectiveFieldOfView(fov, screenWidth / (float)screenHeight, 0.5f,200f);
+                camer *= Matrix4.CreatePerspectiveFieldOfView(fov, screenWidth / (float)screenHeight, 0.5f,1500f);
                 return camer;
             }
             public void FreeCam(KeyboardState input)
@@ -493,17 +618,24 @@ namespace project
                 GC.SuppressFinalize(this);
             }
         }
-
+        public enum pieces
+        {
+            Shore,
+            Water,
+            Land
+        }
         class Hexagon : Shape
         {
+
+            public pieces type;
+
             public static List<Hexagon> Hexagons = new List<Hexagon>();
             public (int, int) qr;
-            public Hexagon(string path, Color color, (int, int) qr) : base(path, color)
+            public Hexagon(string path, Color color, (int, int) qr) : base(path,color)
             {
                 this.qr = qr;
             }
-
-            public void highlightDraw(Matrix4 proj)
+            public void UniformMatrix(Shader SHADER, Matrix4 proj)
             {
                 Matrix4 model = this.modelMat();
                 //get the model matrix
@@ -511,13 +643,23 @@ namespace project
                 Matrix4 aproj = Matrix4.CreateScale(this.scale) * model * proj;
                 //using matrix multiplication to apply the transformations
 
-                int uniID = GL.GetUniformLocation(shader2.Handle, "projection");
+                int uniID = GL.GetUniformLocation(SHADER.Handle, "projection");
 
                 //Give the matrix to the GPU
                 GL.UniformMatrix4(uniID, true, ref aproj);
-
-
-
+            }
+            static public void UniformFloat(Shader SHADER, string path, float f)
+            {
+                int uniID = GL.GetUniformLocation(SHADER.Handle, path);
+                GL.Uniform1(uniID, f);
+            }
+            static public void UniformVec3(Shader SHADER, string path, Vector3 f)
+            {
+                int uniID = GL.GetUniformLocation(SHADER.Handle, path);
+                GL.Uniform3(uniID, f);
+            }
+            public void Draw(Shader SHADER)
+            {
                 //instruct the GPU on what data to draw
                 GL.BindVertexArray(this.vertexArrayObject);
 
@@ -531,42 +673,42 @@ namespace project
                 GL.VertexAttribPointer(this.elementBufferObject, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
                 GL.EnableVertexAttribArray(this.elementBufferObject);
 
-                shader2.Use();
+                SHADER.Use();
 
                 GL.DrawElements(PrimitiveType.Triangles, this.count, DrawElementsType.UnsignedInt, 0);
             }
-            public override void drawObj(Matrix4 proj)
-            {//proj is the projection matrix, the same for all objects
-                Matrix4 model = this.modelMat();
-                //get the model matrix
+            //public override void drawObj(Matrix4 proj)
+            //{//proj is the projection matrix, the same for all objects
+            //    Matrix4 model = this.modelMat();
+            //    //get the model matrix
 
-                Matrix4 aproj = Matrix4.CreateScale(this.scale) * model * proj;
-                //using matrix multiplication to apply the transformations
+            //    Matrix4 aproj = Matrix4.CreateScale(this.scale) * model * proj;
+            //    //using matrix multiplication to apply the transformations
 
-                int uniID = GL.GetUniformLocation(shader.Handle, "projection");
+            //    int uniID = GL.GetUniformLocation(shader.Handle, "projection");
 
-                //Give the matrix to the GPU
-                GL.UniformMatrix4(uniID, true, ref aproj);
-
-
-
-                //instruct the GPU on what data to draw
-                GL.BindVertexArray(this.vertexArrayObject);
-
-                GL.BindBuffer(BufferTarget.ArrayBuffer, this.vertexBufferObject);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, this.elementBufferObject);
+            //    //Give the matrix to the GPU
+            //    GL.UniformMatrix4(uniID, true, ref aproj);
 
 
-                GL.VertexAttribPointer(this.vertexBufferObject, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
-                GL.EnableVertexAttribArray(this.vertexBufferObject);
 
-                GL.VertexAttribPointer(this.elementBufferObject, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
-                GL.EnableVertexAttribArray(this.elementBufferObject);
+            //    //instruct the GPU on what data to draw
+            //    GL.BindVertexArray(this.vertexArrayObject);
 
-                shader.Use();
+            //    GL.BindBuffer(BufferTarget.ArrayBuffer, this.vertexBufferObject);
+            //    GL.BindBuffer(BufferTarget.ElementArrayBuffer, this.elementBufferObject);
 
-                GL.DrawElements(PrimitiveType.Triangles, this.count, DrawElementsType.UnsignedInt, 0);
-            } //draw stuff
+
+            //    GL.VertexAttribPointer(this.vertexBufferObject, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+            //    GL.EnableVertexAttribArray(this.vertexBufferObject);
+
+            //    GL.VertexAttribPointer(this.elementBufferObject, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+            //    GL.EnableVertexAttribArray(this.elementBufferObject);
+
+            //    shader.Use();
+
+            //    GL.DrawElements(PrimitiveType.Triangles, this.count, DrawElementsType.UnsignedInt, 0);
+            //} //draw stuff
         }
 
         class Shape // Shape, many functions. Buffers are RAM on the GPU for storing triangles
@@ -574,7 +716,7 @@ namespace project
             public Vector3 angle;
             public int count;
             public vertex[] verts;
-            uint[] triangle;
+            public uint[] triangle;
 
             //default direction and scales
             public Vector3 direction = new Vector3(0, 0, 1);
@@ -590,7 +732,7 @@ namespace project
             public int elementBufferObject;
             public int vertexArrayObject;
 
-            public virtual void drawObj(Matrix4 proj)
+            public virtual void drawObj(Shader SHADER,Matrix4 proj)
             {//proj is the projection matrix, the same for all objects
                 Matrix4 model = this.modelMat();
                 //get the model matrix
@@ -623,11 +765,12 @@ namespace project
 
 
                 //gpu things
-                shader.Use();
+                SHADER.Use();
                 GL.DrawElements(PrimitiveType.Triangles, this.count, DrawElementsType.UnsignedInt, 0);
             } //draw stuff
 
             //deconstructs .obj files
+
             public Shape(string path, Color color)
             {
 
@@ -904,7 +1047,7 @@ namespace project
                         float y = yOffset + perlinFloatifiser * j / (float)a.GetLength(1);
 
                         //half amplitude and double frequency of each octave
-                        a[i, j] = SampleNoise(x, y, 1, 1, octaves, 2f);
+                        //a[i, j] = SampleNoise(x, y, 1, 1, octaves, 2f);
 
                         //function that manipulates the output to make it nicer
                         a[i, j] = (float)Math.Pow(Math.E, a[i, j]);
@@ -915,8 +1058,10 @@ namespace project
                 return a;
             }
 
-            static float SampleNoise(float x, float y, float amplitude, float frequency, int octaves, float amplitudeModifier)
+            public static float SampleNoise(float x, float y, float amplitude, float frequency, int octaves, float amplitudeModifier,(int,int) offset)
             {
+                x += offset.Item1;
+                y += offset.Item2;
                 float value = 0;
                 //add multiple 'octaves' to make it looks fancy
                 for (int i = 0; i < octaves; i++)
