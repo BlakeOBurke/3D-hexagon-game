@@ -242,17 +242,7 @@ namespace project
 
             //draw it ALL!
 
-            //List<(int, int)> A = Hex.RangeN(curHex, dister);
 
-            //List<Tile> B = Tile.Hexagons.Values.Where(x => A.Contains((x.qr.Item1, x.qr.Item2))).ToList();
-
-            //for (int i = 0; i < A.Count; i++)
-            //{
-            //    if (Tile.Hexagons.ContainsKey(A[i]))
-            //    {
-            //        B.Add(Tile.Hexagons[A[i]]);
-            //    }
-            //}
 
             List<Tile> B = new List<Tile>();
 
