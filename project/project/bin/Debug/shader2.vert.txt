@@ -4,10 +4,12 @@ layout (location = 1) in vec3 aColor; // the color variable has attribute positi
   
 out vec3 ourColor; // output a color to the fragment shader
 out float dist;
+out vec3 hue;
 
 uniform mat4 projection;
 uniform float distance;
 uniform vec3 HexCol;
+uniform vec3 Hue;
 
 void main()
 {
@@ -23,4 +25,5 @@ void main()
     }
 
     dist = distance;
+    hue=Hue;
 }      

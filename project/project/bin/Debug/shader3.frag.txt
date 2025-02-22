@@ -6,5 +6,5 @@ in float Height;
   
 void main()
 {
-    FragColor = vec4(ourColor*(1-(Height+0.5)/4),1);
+    FragColor = vec4(ourColor*(1-(Height+0.5)/6),1);
 }

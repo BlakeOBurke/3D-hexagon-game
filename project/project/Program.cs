@@ -17,13 +17,16 @@ namespace project
     {
 
 
+        public static List<Ientity> vehicles = new List<Ientity>();
+
+
         static void Main(string[] args)
         {
-            for (int i = -40; i <= 40; i++)
+            for (int i = -100; i <= 100; i++)
             {
-                for (int j = -40; j <= 40; j++)
+                for (int j = -100; j <= 100; j++)
                 {
-                    if (Hex.distance((i, j), (0, 0)) <= 40)
+                    if (Hex.distance((i, j), (0, 0)) <= 35)
                     {
                         Hex.hexes.Add(new Hex(i, j));
                     }
