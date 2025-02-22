@@ -110,7 +110,9 @@ namespace project
         static int mouseX, mouseY;
 
         int randomSeed;
-        Random rnd;
+        static Random rnd = new Random();
+
+
         int mouseScroll = 0;
         static bool quickMov = false;
         int totalframeCount;
@@ -135,24 +137,21 @@ namespace project
         }
 
 
-        Color randomColor()        //self explanatory
+        
+        static Color randomColor()        //self explanatory
         {
             return Color.FromArgb(255,rnd.Next(20, 60), rnd.Next(130, 230), rnd.Next(50, 75));
         }
 
 
         static Random rand = new Random();
-        Color randomColor(Color col)        //self explanatory
+        static Color randomColor(Color col)        //self explanatory
         {
             return Color.FromArgb(255, Math.Min(col.R+rand.Next(-10,20),255), Math.Min(col.G + rand.Next(-10,20), 255), Math.Min(col.B + rand.Next(-10,20), 255));
         }
 
         protected override void OnLoad(EventArgs e)
         {
-            Random XXX = new Random();
-            (int, int) offsets = (XXX.Next(0, 5000), XXX.Next(0, 5000));
-
-
             base.OnLoad(e);
 
             GL.ClearColor(Color.CornflowerBlue);
@@ -169,49 +168,253 @@ namespace project
             for (int i = 0; i < Hex.hexes.Count; i++)
             {
                 (int, int) dddd = (Hex.hexes[i].q, Hex.hexes[i].r);
-                float f = Perlin.SampleNoise(dddd.Item1 / 32f, dddd.Item2 / 32f, 1, 1, 8, 2f, offsets);
-                f = -(float)Math.Log(f, Math.E);
-                f *= 40;
-                if (f < 27f)
-                {
-                    f = 27f;
-                }
+                //float f = Perlin.SampleNoise(dddd.Item1 / 32f, dddd.Item2 / 32f, 1, 1, 8, 2f, offsets);
+                //f = -(float)Math.Log(f, Math.E);
+                //f *= 40;
+                //if (f < 27f)
+                //{
+                //    f = 27f;
+                //}
 
-                if (Hex.hexes[i].q == 0 && Hex.hexes[i].r == 0)
-                {
-                    Hexagon.Hexagons.Add(new Hexagon("hex2.obj.txt", Color.Red, (Hex.hexes[i].q, Hex.hexes[i].r)));
-                }
-                else
-                {
-                    pieces piece = pieces.Water;
-                    Color coller = randomColor();
-                    if(f <= 27.01f)
-                    {
-                        coller = randomColor(Color.FromArgb(255,41,41,230));
-                    }
-                    else if(f > 27.05f && f < 28.55f)
-                    {
-                        coller = randomColor(Color.FromArgb(255, 231, 196, 150));
-                        piece = pieces.Shore;
-                    }
-                    else
-                    {
-                        piece = pieces.Land;
-                    }
-                    Hexagon.Hexagons.Add(new Hexagon("hex2.obj.txt", coller, (Hex.hexes[i].q, Hex.hexes[i].r)));
+                //if (Hex.hexes[i].q == 0 && Hex.hexes[i].r == 0)
+                //{
+                //    Hexagon.Hexagons.Add(new Hexagon("hex2.obj.txt", Color.Red, (Hex.hexes[i].q, Hex.hexes[i].r)));
+                //}
+                //else
+                //{
+                //    pieces piece = pieces.Water;
+                //    Color coller = randomColor();
+                //    if(f <= 27.01f)
+                //    {
+                //        coller = randomColor(Color.FromArgb(255,41,41,230));
+                //    }
+                //    else if(f > 27.05f && f < 28.55f)
+                //    {
+                //        coller = randomColor(Color.FromArgb(255, 231, 196, 150));
+                //        piece = pieces.Shore;
+                //    }
+                //    else
+                //    {
+                //        piece = pieces.Land;
+                //    }
+                //    Hexagon.Hexagons.Add(new Hexagon("hex2.obj.txt", coller, (Hex.hexes[i].q, Hex.hexes[i].r)));
 
-                    Hexagon.Hexagons.Last().type = piece;
-                }
-                Hexagon.Hexagons.Last().centre = 8*new Vector3((Hex.hexes[i].q + Hex.hexes[i].r / 2f)*2 , -1/2f, (float)Math.Sqrt(3) * (Hex.hexes[i].r));
-                Hexagon.Hexagons.Last().angle = new Vector3(0, (float)Math.PI / 2f, 0);
-                Hexagon.Hexagons.Last().scale *= 8f;
-                Hexagon.Hexagons.Last().scale *= new Vector3(1,2,1);
-                Hexagon.Hexagons.Last().centre += new Vector3(0, 3*f, 0);
+                //    Hexagon.Hexagons.Last().type = piece;
+                //}
+                //Hexagon.Hexagons.Last().centre = 8*new Vector3((Hex.hexes[i].q + Hex.hexes[i].r / 2f)*2 , -1/2f, (float)Math.Sqrt(3) * (Hex.hexes[i].r));
+                //Hexagon.Hexagons.Last().angle = new Vector3(0, (float)Math.PI / 2f, 0);
+                //Hexagon.Hexagons.Last().scale *= 8f;
+                //Hexagon.Hexagons.Last().scale *= new Vector3(1,2,1);
+                //if(f <= 27.01f)
+                //{
+                //    f -= 1f;
+                //}
+                //Hexagon.Hexagons.Last().centre += new Vector3(0, 3*f, 0);
 
-                Console.WriteLine(f);
+                //Console.WriteLine(f);
+
+
+                Tile.Hexagons.Add(new Tile((Hex.hexes[i].q, Hex.hexes[i].r)));
+
             }
 
         }
+
+        class Tile
+        {
+            public static List<Tile> Hexagons = new List<Tile>();
+
+            public static Shape hex = new Shape("hex2.obj.txt", Color.White);
+            static (int, int) offsets = (rnd.Next(0, 5000), rnd.Next(0, 5000));
+
+            public (int, int) qr;
+            public float height;
+            public pieces type;
+            public Vector3 color;
+            public Vector3 scale = new Vector3(8,16,8);
+            public Vector3 centre;
+
+            public Tile((int,int)qr)
+            {
+                this.qr = qr;
+                SetHeight();
+                SetWorldCentre();
+                SetColor();
+            }
+
+            public void SetColor()
+            {
+                Color C;
+                if(height < 27.01f)
+                {
+                    C = randomColor(Color.FromArgb(255,41,41,230));
+                    type = pieces.Water;
+                }
+                else if (height > 27.05f && height < 28.55f)
+                {
+                    C = randomColor(Color.FromArgb(255, 231, 196, 150));
+                    type = pieces.Shore;
+                }
+                else
+                {
+                    C = randomColor();
+                    type = pieces.Land;
+                }
+
+                color = new Vector3(C.R/255f, C.G/255f, C.B/255f);
+
+            }
+            public void SetHeight()
+            {
+                float f = Perlin.SampleNoise(qr.Item1 / 32f, qr.Item2 / 32f, 1, 1, 8, 2f, offsets);
+                f = -(float)Math.Log(f, Math.E);
+                f *= 40;
+                height = f;
+            }
+            public void SetWorldCentre()
+            {
+                centre = 8 * new Vector3((qr.Item1 + qr.Item2 / 2f) * 2, -1 / 2f, (float)Math.Sqrt(3) * (qr.Item2)) + new Vector3(0,3*height,0);
+            }
+            public void UniformMatrix(Shader SHADER, Matrix4 proj)
+            {
+                Matrix4 model = this.modelMat();
+                //get the model matrix
+
+                Matrix4 aproj = Matrix4.CreateScale(this.scale) * model * proj;
+                //using matrix multiplication to apply the transformations
+
+                int uniID = GL.GetUniformLocation(SHADER.Handle, "projection");
+
+                //Give the matrix to the GPU
+                GL.UniformMatrix4(uniID, true, ref aproj);
+            }
+            static public void UniformFloat(Shader SHADER, string path, float f)
+            {
+                int uniID = GL.GetUniformLocation(SHADER.Handle, path);
+                GL.Uniform1(uniID, f);
+            }
+            static public void UniformVec3(Shader SHADER, string path, Vector3 f)
+            {
+                int uniID = GL.GetUniformLocation(SHADER.Handle, path);
+                GL.Uniform3(uniID, f);
+            }
+            public Matrix4 modelMat()
+            {
+                Matrix4 mov = Matrix4.CreateRotationZ(hex.angle[2]) * Matrix4.CreateRotationY(hex.angle[1]) * Matrix4.CreateRotationX(hex.angle[0]) * Matrix4.CreateTranslation(this.centre);
+                return mov;
+            }
+            public void Draw(Shader SHADER)
+            {
+                UniformVec3(SHADER, "HexCol", color);
+                //instruct the GPU on what data to draw
+                GL.BindVertexArray(hex.vertexArrayObject);
+
+                GL.BindBuffer(BufferTarget.ArrayBuffer, hex.vertexBufferObject);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, hex.elementBufferObject);
+
+
+                GL.VertexAttribPointer(hex.vertexBufferObject, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+                GL.EnableVertexAttribArray(hex.vertexBufferObject);
+
+                GL.VertexAttribPointer(hex.elementBufferObject, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+                GL.EnableVertexAttribArray(hex.elementBufferObject);
+
+                SHADER.Use();
+
+                GL.DrawElements(PrimitiveType.Triangles, hex.count, DrawElementsType.UnsignedInt, 0);
+            }
+        }
+        protected override void OnRenderFrame(FrameEventArgs e)
+        {
+            Console.WriteLine(this.RenderFrequency);
+            shader = new Shader("shader.vert.txt", "shader.frag.txt");
+            shader2 = new Shader("shader2.vert.txt", "shader2.frag.txt");
+            shaderWave = new Shader("shader3.vert.txt", "shader3.frag.txt");
+
+
+            base.OnRenderFrame(e);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+            Matrix4 camMatrix = camera.CameraMatrix();
+
+            //draw it ALL!
+
+            List<(int, int)> A = Hex.RangeN(curHex, dister);
+
+            List<Tile> B = Tile.Hexagons.Where(x => A.Contains((x.qr.Item1, x.qr.Item2))).ToList();
+
+
+
+
+            for (int i = 0; i < B.Count; i++)
+            {
+                if (i == 0)
+                {
+                    shader2.Use();
+                }
+                Tile.UniformFloat(shader2, "distance", 2 + 0.5f * (float)Math.Log(dister + 1 - Hex.distance(B[i].qr, curHex)));
+
+                B[i].UniformMatrix(shader2, camMatrix);
+                B[i].Draw(shader2);
+
+                shader2.Dispose();
+
+            }
+
+
+
+            Tile[] water = Tile.Hexagons.Where(x => x.type == pieces.Water).ToArray();
+
+            for (int i = 0; i < water.Count(); i++)
+            {
+
+                if (i == 0)
+                {
+                    shaderWave.Use();
+                }
+                if (!B.Contains(water[i]))
+                {
+                    water[i].UniformMatrix(shaderWave, camMatrix);
+                    Tile.UniformFloat(shaderWave, "time", totalframeCount);
+                    Tile.UniformVec3(shaderWave, "pos", water[i].centre);
+                    water[i].Draw(shaderWave);
+                }
+            }
+
+
+
+
+            Tile[] notWater = Tile.Hexagons.Where(x => x.type != pieces.Water).ToArray();
+
+            for (int i = 0; i < notWater.Count(); i++)
+            {
+
+                if (i == 0)
+                {
+                    shader.Use();
+                }
+                if (!B.Contains(notWater[i]))
+                {
+                    notWater[i].UniformMatrix(shader, camMatrix);
+                    notWater[i].Draw(shader);
+                }
+            }
+
+
+            Tile.UniformVec3(shader, "HexCol", new Vector3(1f, 1f, 1f));
+            for (int i = 0; i < Shape.models.Count(); ++i)
+            {
+                Shape.models[i].drawObj(shader, camMatrix);
+            }
+
+            shader.Dispose();
+            shader2.Dispose();
+            shaderWave.Dispose();
+            //reset the shader
+
+            this.SwapBuffers();
+        }
+
 
         protected override void OnUnload(EventArgs e)
         {
@@ -258,7 +461,7 @@ namespace project
             }
 
 
-            Console.WriteLine(camera.pos.X);
+            //Console.WriteLine(camera.pos.X);
 
 
             totalframeCount++;
@@ -266,7 +469,7 @@ namespace project
 
         static (int, int) curHex = (0, 0);
         static int dister = 3;
-        protected override void OnRenderFrame(FrameEventArgs e)
+        protected  void OnRender2Frame(FrameEventArgs e)
         {
 
             shader = new Shader("shader.vert.txt", "shader.frag.txt");

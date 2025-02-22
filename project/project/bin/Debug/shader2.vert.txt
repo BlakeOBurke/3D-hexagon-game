@@ -7,6 +7,7 @@ out float dist;
 
 uniform mat4 projection;
 uniform float distance;
+uniform vec3 HexCol;
 
 void main()
 {
@@ -14,11 +15,11 @@ void main()
     gl_Position = vec4(aPos,1) * A;
     if(aPos.y < 0.001)
     {
-        ourColor = vec3(1,1,1);
+        ourColor = vec3(1,1,1) * HexCol;
     }
     else
     {
-        ourColor = aColor; // set ourColor to the input color from the vertex data
+        ourColor = aColor*HexCol; // set ourColor to the input color from the vertex data
     }
 
     dist = distance;
