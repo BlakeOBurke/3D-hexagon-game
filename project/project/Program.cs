@@ -35,7 +35,7 @@ namespace project
             }
 
             Game a = new Game(1200, 900);
-            a.Run(60,60);
+            a.Run(60,25);
            
         }
 

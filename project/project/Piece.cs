@@ -770,8 +770,10 @@ namespace project
 
             //pieces.Add(new Tank((0,0),0));
             //pieces.Add(new Missile_Boat((0,0),0));
-            pieces.Add(new AircraftCarrier((5,5),1));
-            pieces.Add(new AircraftCarrier((5,5),0));
+
+            Random locationSelector = new Random();
+            pieces.Add(new AircraftCarrier(Game.water[locationSelector.Next(0,Game.water.Count())].qr,1));
+            pieces.Add(new AircraftCarrier(Game.water[locationSelector.Next(0, Game.water.Count())].qr, 0));
 
 
             for (int i = 0; i < teamCount;i++) 

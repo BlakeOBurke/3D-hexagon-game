@@ -68,7 +68,6 @@ namespace project
 
         protected override void OnLoad(EventArgs e)
         {
-            Manager.setup();
 
             base.OnLoad(e);
 
@@ -91,6 +90,8 @@ namespace project
 
             water = Tile.Hexagons.Values.Where(x => x.type == pieces.Water).ToArray();
             notWater = Tile.Hexagons.Values.Where(x => x.type != pieces.Water).ToArray();
+
+            Manager.setup();
         }
 
 
@@ -99,11 +100,11 @@ namespace project
         public static KeyboardState currentKey = Keyboard.GetState();
         public static string turnStatus = "move";
 
-        static Tile[] water;
-        static Tile[] notWater;
+        public static Tile[] water;
+        public static Tile[] notWater;
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            //Console.WriteLine(this.RenderFrequency);
+            Console.WriteLine(this.RenderFrequency);
             shader = new Shader("shader.vert.txt", "shader.frag.txt");
             shader2 = new Shader("shader2.vert.txt", "shader2.frag.txt");
             shaderWave = new Shader("shader3.vert.txt", "shader3.frag.txt");
@@ -148,6 +149,8 @@ namespace project
                 if(i == 0)
                 {
                     Tile.UniformVec3(shader2, "Hue", new Vector3(0, 0, 0));
+
+                    Tile.UniformFloat(shader2, "distance", 1.15f);
                 }
                 else
                 {
@@ -159,8 +162,9 @@ namespace project
                     {
                         Tile.UniformVec3(shader2, "Hue", new Vector3(400 / 255f, 40 / 255f, 15 / 255f));
                     }
+
+                    Tile.UniformFloat(shader2, "distance", 1);
                 }
-                Tile.UniformFloat(shader2, "distance", 1);
 
                 B[i].UniformMatrix(shader2, camMatrix);
                 B[i].Draw(shader2);
@@ -266,7 +270,7 @@ namespace project
                 if (Hex.distance(Hex.add(curHex, (1, 0)), (0, 0)) <= 35)
                 {
                     cursorMov += 1;
-                    if (cursorMov >= 10)
+                    if (cursorMov >= 7)
                     {
                         curHex = (curHex.Item1 + 1, curHex.Item2);
                         cursorMov = 0;
@@ -280,7 +284,7 @@ namespace project
                 if (Hex.distance(Hex.add(curHex, (-1, 0)), (0, 0)) <= 35)
                 {
                     cursorMov += 1;
-                    if (cursorMov >= 10)
+                    if (cursorMov >= 7)
                     {
                         curHex = (curHex.Item1 - 1, curHex.Item2);
                         cursorMov = 0;
@@ -294,7 +298,7 @@ namespace project
                 if (Hex.distance(Hex.add(curHex, (0, -1)), (0, 0)) <= 35)
                 {
                     cursorMov += 1;
-                    if (cursorMov >= 10)
+                    if (cursorMov >= 7)
                     {
                         curHex = (curHex.Item1, curHex.Item2 - 1);
                         cursorMov = 0;
@@ -308,7 +312,7 @@ namespace project
                 if (Hex.distance(Hex.add(curHex, (0, 1)), (0, 0)) <= 35)
                 {
                     cursorMov += 1;
-                    if (cursorMov >= 10)
+                    if (cursorMov >= 7)
                     {
                         curHex = (curHex.Item1, curHex.Item2 + 1);
                         cursorMov = 0;
