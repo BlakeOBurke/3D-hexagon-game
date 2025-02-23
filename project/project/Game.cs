@@ -206,18 +206,18 @@ namespace project
             }
 
 
-            List<Ientity> copy = Manager.pieces.ToList();
-
-
             Tile.UniformVec3(shader, "HexCol", new Vector3(1f, 1f, 1f));
             for (int i = 0; i < Shape.models.Count(); ++i)
             {
                 Shape.models[i].drawObj(shader, camMatrix);
             }
-            for (int i = 0; i < copy.Count; ++i)
+
+
+            for (int i = 0; i < Manager.pieces.Count(); ++i)
             {
-                copy[i].Display();
-                copy[i].shape.drawObj(shader, camMatrix);
+                Manager.pieces[i].Display();
+                Manager.pieces[i].shape.drawObj(shader, camMatrix);
+
             }
 
 
@@ -230,13 +230,14 @@ namespace project
 
             totalframeCount++;
         }
-
+        static int oldPieceCount = Manager.pieces.Count();
 
         protected override void OnUnload(EventArgs e)
         {
             base.OnUnload(e);
             shader.Dispose();
             shader2.Dispose();
+            shaderWave.Dispose();
         }
 
 
@@ -253,26 +254,8 @@ namespace project
         Thread newThread = new Thread(Manager.Turn);
 
         int cursorMov = 0;
-        protected override void OnUpdateFrame(FrameEventArgs e)
+        void moveCursor(KeyboardState input)
         {
-            base.OnUpdateFrame(e);
-            
-            //totalframeCount++;
-            if (!newThread.IsAlive)
-            {
-                newThread = new Thread(Manager.Turn);
-                newThread.Start();
-            }
-
-
-            KeyboardState input = Keyboard.GetState();
-            currentKey = input;
-
-            camera.FreeMouse();
-            camera.FreeCam(input);
-
-
-
             bool decrease = false;
             if (input.IsKeyDown(Key.Escape))
             {
@@ -280,7 +263,7 @@ namespace project
             }
             if (input.IsKeyDown(Key.Up))
             {
-                if (Hex.distance(Hex.add(curHex, (1, 0)), (0, 0)) <= 33)
+                if (Hex.distance(Hex.add(curHex, (1, 0)), (0, 0)) <= 35)
                 {
                     cursorMov += 1;
                     if (cursorMov >= 10)
@@ -294,7 +277,7 @@ namespace project
             }
             if (input.IsKeyDown(Key.Down))
             {
-                if (Hex.distance(Hex.add(curHex, (-1, 0)), (0, 0)) <= 33)
+                if (Hex.distance(Hex.add(curHex, (-1, 0)), (0, 0)) <= 35)
                 {
                     cursorMov += 1;
                     if (cursorMov >= 10)
@@ -308,7 +291,7 @@ namespace project
             }
             if (input.IsKeyDown(Key.Left))
             {
-                if (Hex.distance(Hex.add(curHex, (0, -1)), (0, 0)) <= 33)
+                if (Hex.distance(Hex.add(curHex, (0, -1)), (0, 0)) <= 35)
                 {
                     cursorMov += 1;
                     if (cursorMov >= 10)
@@ -322,7 +305,7 @@ namespace project
             }
             if (input.IsKeyDown(Key.Right))
             {
-                if (Hex.distance(Hex.add(curHex,(0,1)), (0, 0)) <= 33)
+                if (Hex.distance(Hex.add(curHex, (0, 1)), (0, 0)) <= 35)
                 {
                     cursorMov += 1;
                     if (cursorMov >= 10)
@@ -341,114 +324,140 @@ namespace project
                     cursorMov -= 1;
                 }
             }
+        }
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
+            
+            //totalframeCount++;
+            if (!newThread.IsAlive)
+            {
+                newThread = new Thread(Manager.Turn);
+                newThread.Start();
+            }
+
+            KeyboardState input = Keyboard.GetState();
+            currentKey = input;
+
+            camera.FreeMouse();
+            camera.FreeCam(input);
 
 
+            moveCursor(input);
+
+            if (input.IsKeyDown(Key.Space))
+            {
+                Shape.models.Add(new Shape("Cube.obj", randomColor()));
+            }
+
+            //(int, int, int) difficulty = Shape.genBufferLocation();
+            //Console.WriteLine($"{difficulty.Item1},{difficulty.Item2},{difficulty.Item3}");
             totalUpdateCount++;
         }
 
         public static (int, int) curHex = (0, 0);
-        static int dister = 3;
-        protected  void OnRender2Frame(FrameEventArgs e)
-        {
+        //static int dister = 3;
+        //protected  void OnRender2Frame(FrameEventArgs e)
+        //{
 
-            shader = new Shader("shader.vert.txt", "shader.frag.txt");
-            shader2 = new Shader("shader2.vert.txt", "shader2.frag.txt");
-            shaderWave = new Shader("shader3.vert.txt", "shader3.frag.txt");
-
-
-
-
-            base.OnRenderFrame(e);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            Matrix4 camMatrix = camera.CameraMatrix();
-
-            //draw it ALL!
-
-            List<(int, int)> A = Hex.RangeN(curHex, dister);
-
-            List<Hexagon> B = Hexagon.Hexagons.Where(x => A.Contains((x.qr.Item1, x.qr.Item2))).ToList();
+        //    shader = new Shader("shader.vert.txt", "shader.frag.txt");
+        //    shader2 = new Shader("shader2.vert.txt", "shader2.frag.txt");
+        //    shaderWave = new Shader("shader3.vert.txt", "shader3.frag.txt");
 
 
 
 
-            for (int i = 0; i < B.Count; i++)
-            {
-                if (i == 0)
-                {
-                    //B[i].UniformMatrix(shader2, camMatrix);
-                    //B[i].Draw(shader2);
-                    //B[i].UniformFloat(shader2, "distance", -0.15f * (dister + 1 - Hex.distance(B[i].qr, curHex)));
-                    shader2.Use();
-                }
-                Hexagon.UniformFloat(shader2, "distance", 2 + 0.5f * (float)Math.Log(dister + 1 - Hex.distance(B[i].qr, curHex)));
+        //    base.OnRenderFrame(e);
+        //    GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-                B[i].UniformMatrix(shader2, camMatrix);
-                B[i].Draw(shader2);
+        //    Matrix4 camMatrix = camera.CameraMatrix();
 
-                //for (int d = 0; d < 32; d++)
-                //{
-                //    B[i].UniformFloat(shader2, "distance", (dister + 1 - Hex.distance(B[i].qr, curHex)) - (d / 16f));
-                //    B[i].Draw(shader2);
+        //    //draw it ALL!
 
-                //}
+        //    List<(int, int)> A = Hex.RangeN(curHex, dister);
 
-                shader2.Dispose();
-
-            }
+        //    List<Hexagon> B = Hexagon.Hexagons.Where(x => A.Contains((x.qr.Item1, x.qr.Item2))).ToList();
 
 
 
-            Hexagon[] water = Hexagon.Hexagons.Where(x => x.type == pieces.Water).ToArray();
 
-            for (int i = 0; i < water.Count(); i++)
-            {
+        //    for (int i = 0; i < B.Count; i++)
+        //    {
+        //        if (i == 0)
+        //        {
+        //            //B[i].UniformMatrix(shader2, camMatrix);
+        //            //B[i].Draw(shader2);
+        //            //B[i].UniformFloat(shader2, "distance", -0.15f * (dister + 1 - Hex.distance(B[i].qr, curHex)));
+        //            shader2.Use();
+        //        }
+        //        Hexagon.UniformFloat(shader2, "distance", 2 + 0.5f * (float)Math.Log(dister + 1 - Hex.distance(B[i].qr, curHex)));
+
+        //        B[i].UniformMatrix(shader2, camMatrix);
+        //        B[i].Draw(shader2);
+
+        //        //for (int d = 0; d < 32; d++)
+        //        //{
+        //        //    B[i].UniformFloat(shader2, "distance", (dister + 1 - Hex.distance(B[i].qr, curHex)) - (d / 16f));
+        //        //    B[i].Draw(shader2);
+
+        //        //}
+
+        //        shader2.Dispose();
+
+        //    }
+
+
+
+        //    Hexagon[] water = Hexagon.Hexagons.Where(x => x.type == pieces.Water).ToArray();
+
+        //    for (int i = 0; i < water.Count(); i++)
+        //    {
                 
-                if(i == 0)
-                {
-                    shaderWave.Use();
-                }
-                if (!B.Contains(water[i]))
-                {
-                    water[i].UniformMatrix(shaderWave,camMatrix);
-                    Hexagon.UniformFloat(shaderWave,"time",totalframeCount);
-                    Hexagon.UniformVec3(shaderWave, "pos", water[i].centre);
-                    water[i].Draw(shaderWave);
-                }
-            }
+        //        if(i == 0)
+        //        {
+        //            shaderWave.Use();
+        //        }
+        //        if (!B.Contains(water[i]))
+        //        {
+        //            water[i].UniformMatrix(shaderWave,camMatrix);
+        //            Hexagon.UniformFloat(shaderWave,"time",totalframeCount);
+        //            Hexagon.UniformVec3(shaderWave, "pos", water[i].centre);
+        //            water[i].Draw(shaderWave);
+        //        }
+        //    }
 
 
 
 
-            Hexagon[] notWater = Hexagon.Hexagons.Where(x => x.type != pieces.Water).ToArray();
+        //    Hexagon[] notWater = Hexagon.Hexagons.Where(x => x.type != pieces.Water).ToArray();
 
-            for (int i = 0; i < notWater.Count(); i++)
-            {
+        //    for (int i = 0; i < notWater.Count(); i++)
+        //    {
 
-                if (i == 0)
-                {
-                    shader.Use();
-                }
-                if (!B.Contains(notWater[i]))
-                {
-                    notWater[i].UniformMatrix(shader, camMatrix);
-                    notWater[i].Draw(shader);
-                }
-            }
+        //        if (i == 0)
+        //        {
+        //            shader.Use();
+        //        }
+        //        if (!B.Contains(notWater[i]))
+        //        {
+        //            notWater[i].UniformMatrix(shader, camMatrix);
+        //            notWater[i].Draw(shader);
+        //        }
+        //    }
 
 
-            for (int i = 0; i < Shape.models.Count(); ++i)
-            {
-                Shape.models[i].drawObj(shader, camMatrix);
-            }
+        //    for (int i = 0; i < Shape.models.Count(); ++i)
+        //    {
+        //        Shape.models[i].drawObj(shader, camMatrix);
+        //    }
 
-            shader.Dispose();
-            shader2.Dispose();
-            shaderWave.Dispose();
-            //reset the shader
+        //    shader.Dispose();
+        //    shader2.Dispose();
+        //    shaderWave.Dispose();
+        //    //reset the shader
 
-            this.SwapBuffers();
-        }
+        //    this.SwapBuffers();
+        //}
 
 
 
@@ -928,6 +937,14 @@ namespace project
             //} //draw stuff
         }
 
+        //public static Shape WrapperFixObjectBug(int team)
+        //{
+        //    Shape A = new Game.Shape("cube.obj", team == 0 ? Color.DarkBlue : Color.Red);
+        //    A.scale *= 7;
+        //    A.scale *= new Vector3(0.8f, 0.3f, 1.5f);
+        //    return A;
+        //}
+
         public class Shape // Shape, many functions. Buffers are RAM on the GPU for storing triangles
         {
             public Vector3 angle;
@@ -977,16 +994,14 @@ namespace project
                 GL.VertexAttribPointer(this.elementBufferObject, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
                 GL.EnableVertexAttribArray(this.elementBufferObject);
 
-
-
-
-
                 //gpu things
                 SHADER.Use();
+                
                 GL.DrawElements(PrimitiveType.Triangles, this.count, DrawElementsType.UnsignedInt, 0);
             } //draw stuff
 
             //deconstructs .obj files
+
 
             public Shape(string path, Color color)
             {
@@ -1032,37 +1047,49 @@ namespace project
 
 
 
-                doBuffers();
+                DoBuffers();
 
             }
-            
+
+
+            public void Respray(Color A)
+            {
+                for (int i = 0; i < verts.Count(); i++)
+                {
+                    this.verts[i].color = A;
+                }
+
+                DoBuffers();
+            }
 
             //allocates and sets data onto GPU
             //resetting buffers
-            public void doBuffers()
+            public static (int, int, int) GenBufferLocation()
             {
-
-                this.vertexBufferObject = GL.GenBuffer();
-                this.elementBufferObject = GL.GenBuffer();
-                this.vertexArrayObject = GL.GenVertexArray();
-
-                resetBuffers();
-
-                verts = null;
-                triangle = null;
+                return (GL.GenBuffer(), GL.GenBuffer(), GL.GenVertexArray());
             }
-            public void resetBuffers()
+            public void DoBuffers()
             {
-                float[] vertices = GetFloat();
-                uint[] indices = triangle;
+                (int,int,int) temp = GenBufferLocation();
+
+                this.vertexBufferObject = temp.Item1;
+                this.elementBufferObject = temp.Item2;
+                this.vertexArrayObject = temp.Item3;
+
+                ResetBuffers();
+            }
+            public void ResetBuffers()
+            {
+                float[] vertices = this.GetFloat();
+                uint[] indices = this.triangle;
 
 
-                GL.BindVertexArray(vertexArrayObject);
+                GL.BindVertexArray(this.vertexArrayObject);
 
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferObject);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, this.vertexBufferObject);
                 GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.DynamicDraw);
 
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, elementBufferObject);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, this.elementBufferObject);
                 GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.DynamicDraw);
 
                 GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
@@ -1136,7 +1163,7 @@ namespace project
             public float[] GetFloat()
             {
                 //gets all of the information about the vertices to send to the graphics as a single array
-                float[] result = new float[count * 6];
+                float[] result = new float[verts.Count() * 6];
                 for (int i = 0; i < verts.Count(); i++)
                 {
                     result[i * 6] = verts[i].pos[0];

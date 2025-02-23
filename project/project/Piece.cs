@@ -11,6 +11,7 @@ using OpenTK.Graphics.OpenGL;
 using System.Drawing;
 using System.Threading;
 using System.CodeDom;
+using System.Runtime.InteropServices;
 
 namespace project
 {
@@ -53,12 +54,14 @@ namespace project
         Bomber,
         Fighter,
         Aircraft_Carrier,
-        Missile_Boat
+        Missile_Boat,
+        Null
     }
 
 
     interface Ientity
     {
+        Unit SpecialType { get; set; }
         Game.Shape shape { get; set; }
         (int,int) position {get; set;}
         bool canAttack { get; set; }
@@ -85,6 +88,7 @@ namespace project
 
     class Base : Ientity
     {
+        public Unit SpecialType { get; set; }
         public Game.Shape shape { get; set; }
         public (int, int) position { get; set; }
         public bool canAttack { get; set; } = false;
@@ -162,6 +166,7 @@ namespace project
     }
     class Tank : Ientity
     {
+        public Unit SpecialType { get; set; }
         public Game.Shape shape { get; set; } 
         public (int, int) position { get; set; }
         public bool canAttack { get; set; } = true;
@@ -245,7 +250,7 @@ namespace project
         {
             this.shape = new Game.Shape("cube.obj", team == 0 ? Color.Blue : Color.DarkRed);
             this.shape.scale *= 7;
-            this.position = (0, 0);
+            this.position = position;
             this.team = team;
             this.health = health;
             this.damage = damage;
@@ -253,6 +258,7 @@ namespace project
     }
     class AA_Gun : Ientity
     {
+        public Unit SpecialType { get; set; }
         public Game.Shape shape { get; set; }
         public (int, int) position { get; set; }
         public bool canAttack { get; set; } = true;
@@ -334,7 +340,7 @@ namespace project
             this.shape = new Game.Shape("cube.obj", team == 0 ? Color.DarkBlue : Color.Red);
             this.shape.scale *= 7;
             this.shape.scale *= new Vector3(0.8f, 1.2f, 0.8f);
-            this.position = (0, 0);
+            this.position = position;
             this.team = team;
             this.health = health;
             this.damage = damage;
@@ -342,6 +348,7 @@ namespace project
     }
     class Fighter : Ientity
     {
+        public Unit SpecialType { get; set; }
         public Game.Shape shape { get; set; }
         public (int, int) position { get; set; }
         public bool canAttack { get; set; } = true;
@@ -427,14 +434,16 @@ namespace project
             this.shape = new Game.Shape("cube.obj", team == 0 ? Color.DarkBlue : Color.Red);
             this.shape.scale *= 7;
             this.shape.scale *= new Vector3(0.8f, 0.3f, 1.5f);
-            this.position = (0, 0);
+            this.position = position;
             this.team = team;
             this.health = health;
             this.damage = damage;
         }
     }
+
     class Bomber : Ientity
     {
+        public Unit SpecialType { get; set; }
         public Game.Shape shape { get; set; }
         public (int, int) position { get; set; }
         public bool canAttack { get; set; } = true;
@@ -520,7 +529,7 @@ namespace project
             this.shape = new Game.Shape("cube.obj", team == 0 ? Color.DarkBlue : Color.Red);
             this.shape.scale *= 7;
             this.shape.scale *= new Vector3(1f, 0.4f, 1.5f);
-            this.position = (5, 5);
+            this.position = position;
             this.team = team;
             this.health = health;
             this.damage = damage;
@@ -528,6 +537,7 @@ namespace project
     }
     class Missile_Boat : Ientity
     {
+        public Unit SpecialType { get; set; }
         public Game.Shape shape { get; set; }
         public (int, int) position { get; set; }
         public bool canAttack { get; set; } = true;
@@ -609,7 +619,137 @@ namespace project
             this.shape = new Game.Shape("cube.obj", team == 0 ? Color.DarkBlue : Color.Red);
             this.shape.scale *= 7;
             this.shape.scale *= new Vector3(1f, 0.4f, 1.5f);
-            this.position = (6, 6);
+            this.position = position;
+            this.team = team;
+            this.health = health;
+            this.damage = damage;
+        }
+    }
+
+    class AircraftCarrier : Ientity
+    {
+        public Unit SpecialType { get; set; } = Unit.Fighter;
+        public int PlaneStock = 2;
+       
+        public Game.Shape shape { get; set; }
+        public (int, int) position { get; set; }
+        public bool canAttack { get; set; } = true;
+        public Unit type { get; set; } = Unit.Aircraft_Carrier;
+        public Domain domain { get; set; } = Domain.Water;
+        public armourType armour { get; set; } = armourType.Heavy;
+        public damageType gunType { get; set; } = damageType.Gun;
+        public int moveSpeed { get; set; } = 1;
+        public int range { get; set; } = 1;
+        public int team { get; set; }
+
+        public int health { get; set; } = 0;
+        public int damage { get; set; }
+        public void attack((int, int) position)
+        {
+            if (SpecialType == Unit.Bomber)
+            {
+                Manager.pieces.Add(Manager.storedPieces[this.team].Where(x => x.type == Unit.Bomber).First());
+                Manager.storedPieces[team].Remove(Manager.storedPieces[this.team].Where(x => x.type == Unit.Bomber).First());
+                Manager.pieces.Last().position = position;
+
+                SpecialType = Unit.Fighter;
+            }
+            else
+            {
+                Manager.pieces.Add(Manager.storedPieces[this.team].Where(x => x.type == Unit.Fighter).First());
+                Manager.storedPieces[team].Remove(Manager.storedPieces[this.team].Where(x => x.type == Unit.Fighter).First());
+                Manager.pieces.Last().position = position;
+
+                SpecialType = Unit.Bomber;
+            }
+            PlaneStock--;
+        }
+        public void Damage(Ientity target)
+        {
+            target.TakeDamage(damage, this.gunType);
+        }
+        public void TakeDamage(int damage, damageType Damage)
+        {
+            if (Damage == damageType.Shell)
+            {
+                damage = (int)(damage * 2);
+            }
+            health -= damage;
+
+            Console.WriteLine($"{this.type} took {damage} damage, {this.type} health = {health}");
+
+            if (!IsLive())
+            {
+                Kill();
+            }
+        }
+        public bool IsLive()
+        {
+            if (health <= 0)
+            {
+                return false;
+            }
+            return true;
+        }
+        public void Kill()
+        {
+            Console.WriteLine($"{this.type} was destroyed");
+            Manager.pieces.Remove(this);
+        }
+        public void Display()
+        {
+            //set centre = this
+            Game.Tile A = Game.Tile.Hexagons[position];
+            shape.centre = 8 * new Vector3((A.qr.Item1 + A.qr.Item2 / 2f) * 2, -1, (float)Math.Sqrt(3) * (A.qr.Item2)) + new Vector3(0, 3 * A.height + 20, 0);
+            return;
+        }
+        public void Move((int, int) newPos)
+        {
+            Manager.Move(this, newPos);
+        }
+        public List<(int, int)> GetMoves()
+        {
+            return Manager.getMoves(this);
+        }
+
+        public List<(int, int)> GetAttackable()
+        {
+            if(this.PlaneStock == 0)
+            {
+                return new List<(int,int)>();
+            }
+
+            List<(int, int)> targettable = Hex.RangeN(position, range);
+
+            HashSet<(int, int)> obstructions = new HashSet<(int, int)>();
+            for (int i = 0; i < Manager.pieces.Count(); i++)
+            {
+                if (Manager.pieces[i] != this && Manager.pieces[i].domain == Domain.Air)
+                {
+                    obstructions.Add(Manager.pieces[i].position);
+                }
+            }
+
+
+            for (int i = 0; i < targettable.Count; i++)
+            {
+                //see if targetable
+                if (obstructions.Contains(targettable[i]))
+                {
+                    targettable.Remove(targettable[i]);
+                    i--;
+                }
+
+            }
+            return targettable;
+
+        }
+        public AircraftCarrier((int, int) position, int team = 0, int health = 100, int damage = 2)
+        {
+            this.shape = new Game.Shape("cube.obj", team == 0 ? Color.DarkBlue : Color.Red);
+            this.shape.scale *= 7;
+            this.shape.scale *= new Vector3(1f, 0.4f, 1.5f);
+            this.position = position;
             this.team = team;
             this.health = health;
             this.damage = damage;
@@ -619,16 +759,25 @@ namespace project
 
     class Manager
     {
-
+        static int teamCount = 2;
         public static List<Ientity> pieces = new List<Ientity>();
+        public static List<List<Ientity>> storedPieces = new List<List<Ientity>>();
+
 
         public static void setup()
         {
             //start stuff
 
-            pieces.Add(new Tank((0,0),0));
-            pieces.Add(new Missile_Boat((0,0),0));
-            pieces.Add(new Bomber((5,5),1));
+            //pieces.Add(new Tank((0,0),0));
+            //pieces.Add(new Missile_Boat((0,0),0));
+            pieces.Add(new AircraftCarrier((5,5),1));
+            pieces.Add(new AircraftCarrier((5,5),0));
+
+
+            for (int i = 0; i < teamCount;i++) 
+            { 
+                storedPieces.Add(new List<Ientity>() { new Fighter((0, 0),i),new Bomber((0,0),i)});
+            }
         }
         public static int currTeam = 0;
         public static void Turn()
@@ -644,7 +793,10 @@ namespace project
                 Console.WriteLine($"{(list[i].team == 1 ? "Red" : "Blue")} {list[i].type}");
                 Console.WriteLine("health = " + list[i].health);
 
+                //
                 //get moves
+                //
+
                 List<(int, int)> moves = list[i].GetMoves();
 
                 Game.DisplayMoves = moves.ToList();
@@ -662,19 +814,33 @@ namespace project
                     }
                 }
 
-                //attack
 
-                List<(int, int)> attacks = list[i].GetAttackable();
+                ATTACK(list[i]);
+            }
 
-                Game.DisplayMoves = attacks.ToList();
+            Thread.Sleep(100);
+            Game.DoNextTurn(1 - currTeam);
+            return;
+        }
+        static void ATTACK(Ientity CurrentPiece)
+        {
+            //
+            //attack
+            //
 
-                Game.turnStatus = "attack";
-                Thread.Sleep(100);
+            List<(int, int)> attacks = CurrentPiece.GetAttackable();
+
+            Game.DisplayMoves = attacks.ToList();
+
+            Game.turnStatus = "attack";
+            Thread.Sleep(100);
+            if (CurrentPiece.type != Unit.Aircraft_Carrier)
+            {
                 if (attacks.Count() != 0)
                 {
                     Console.WriteLine("select target");
                 }
-                while (true && attacks.Count()!=0)
+                while (true && attacks.Count() != 0)
                 {
 
                     bool breaker = false;
@@ -689,10 +855,50 @@ namespace project
                         {
                             if (Game.currentKey.IsKeyDown(Key.Enter))
                             {
-                                list[i].attack(Game.curHex);
+                                CurrentPiece.attack(Game.curHex);
                                 breaker = true;
                             }
-                            else if(!attacks.Contains(Game.curHex))
+                            else if (!attacks.Contains(Game.curHex))
+                            {
+                                break;
+                            }
+                        } while (!Game.currentKey.IsKeyDown(Key.Enter));
+
+                        if (breaker) break;
+
+                    }
+
+                    if (Game.currentKey.IsKeyDown(Key.BackSpace))
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                if (attacks.Count() != 0)
+                {
+                    Console.WriteLine("select spawn Location");
+                }
+                while (true && attacks.Count() != 0)
+                {
+
+                    bool breaker = false;
+                    if (attacks.Contains(Game.curHex))
+                    {
+                        breaker = false;
+                        Console.WriteLine();
+                        Console.WriteLine($"spawn {CurrentPiece.SpecialType}?");
+                        Console.WriteLine("press enter to spawn");
+
+                        do
+                        {
+                            if (Game.currentKey.IsKeyDown(Key.Enter))
+                            {
+                                CurrentPiece.attack(Game.curHex);
+                                breaker = true;
+                            }
+                            else if (!attacks.Contains(Game.curHex))
                             {
                                 break;
                             }
@@ -709,11 +915,7 @@ namespace project
                 }
             }
 
-            Thread.Sleep(100);
-            Game.DoNextTurn(1 - currTeam);
-            return;
         }
-
 
 
 
