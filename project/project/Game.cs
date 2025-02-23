@@ -109,7 +109,7 @@ namespace project
 
         static int mouseX, mouseY;
 
-        int randomSeed;
+
         static Random rnd = new Random();
 
 
@@ -118,7 +118,7 @@ namespace project
         int totalUpdateCount = 0;
         int totalframeCount = 0;
 
-        Game.Camera camera = new Camera(0, 50, 0);
+        Game.Camera camera = new Camera(-200, 200, -200);
 
         Shader shader;
         Shader shader2;
@@ -129,7 +129,7 @@ namespace project
         {
             screenHeight = width; screenWidth = height; quickMov = false; mouseX = 0; mouseY = 0;
             rnd = new Random();
-            camera = new Game.Camera(0, 50, 0);
+            camera = new Game.Camera(-300, 200, -300);
             Shape.models.Add(new Shape("Cube.obj", randomColor()));
             Shape.models.Last().centre += new Vector3(-500000, -50000000, -10000000);
             Shape.models.Add(new Shape("hex.obj", Color.SaddleBrown));
@@ -170,55 +170,12 @@ namespace project
 
             for (int i = 0; i < Hex.hexes.Count; i++)
             {
-                //(int, int) dddd = (Hex.hexes[i].q, Hex.hexes[i].r);
-                //float f = Perlin.SampleNoise(dddd.Item1 / 32f, dddd.Item2 / 32f, 1, 1, 8, 2f, offsets);
-                //f = -(float)Math.Log(f, Math.E);
-                //f *= 40;
-                //if (f < 27f)
-                //{
-                //    f = 27f;
-                //}
-
-                //if (Hex.hexes[i].q == 0 && Hex.hexes[i].r == 0)
-                //{
-                //    Hexagon.Hexagons.Add(new Hexagon("hex2.obj.txt", Color.Red, (Hex.hexes[i].q, Hex.hexes[i].r)));
-                //}
-                //else
-                //{
-                //    pieces piece = pieces.Water;
-                //    Color coller = randomColor();
-                //    if(f <= 27.01f)
-                //    {
-                //        coller = randomColor(Color.FromArgb(255,41,41,230));
-                //    }
-                //    else if(f > 27.05f && f < 28.55f)
-                //    {
-                //        coller = randomColor(Color.FromArgb(255, 231, 196, 150));
-                //        piece = pieces.Shore;
-                //    }
-                //    else
-                //    {
-                //        piece = pieces.Land;
-                //    }
-                //    Hexagon.Hexagons.Add(new Hexagon("hex2.obj.txt", coller, (Hex.hexes[i].q, Hex.hexes[i].r)));
-
-                //    Hexagon.Hexagons.Last().type = piece;
-                //}
-                //Hexagon.Hexagons.Last().centre = 8*new Vector3((Hex.hexes[i].q + Hex.hexes[i].r / 2f)*2 , -1/2f, (float)Math.Sqrt(3) * (Hex.hexes[i].r));
-                //Hexagon.Hexagons.Last().angle = new Vector3(0, (float)Math.PI / 2f, 0);
-                //Hexagon.Hexagons.Last().scale *= 8f;
-                //Hexagon.Hexagons.Last().scale *= new Vector3(1,2,1);
-                //if(f <= 27.01f)
-                //{
-                //    f -= 1f;
-                //}
-                //Hexagon.Hexagons.Last().centre += new Vector3(0, 3*f, 0);
-
-
                 Tile.Hexagons.Add((Hex.hexes[i].q, Hex.hexes[i].r),new Tile((Hex.hexes[i].q, Hex.hexes[i].r)));
-
             }
 
+
+            water = Tile.Hexagons.Values.Where(x => x.type == pieces.Water).ToArray();
+            notWater = Tile.Hexagons.Values.Where(x => x.type != pieces.Water).ToArray();
         }
 
 
@@ -226,6 +183,9 @@ namespace project
 
         public static KeyboardState currentKey = Keyboard.GetState();
         public static string turnStatus = "move";
+
+        static Tile[] water;
+        static Tile[] notWater;
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             //Console.WriteLine(this.RenderFrequency);
@@ -235,6 +195,9 @@ namespace project
 
 
             base.OnRenderFrame(e);
+
+
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             Matrix4 camMatrix = camera.CameraMatrix();
@@ -244,7 +207,7 @@ namespace project
 
 
             List<Tile> B = new List<Tile>();
-
+            //determine what to highlight
             if (Tile.Hexagons.ContainsKey(curHex))
             {
                 B.Add(Tile.Hexagons[curHex]);
@@ -258,7 +221,7 @@ namespace project
             }
 
 
-
+            //determine what to highlight
             for (int i = 0; i < B.Count; i++)
             {
                 if (i == 0)
@@ -293,8 +256,7 @@ namespace project
             }
 
 
-
-            Tile[] water = Tile.Hexagons.Values.Where(x => x.type == pieces.Water).ToArray();
+            
 
             for (int i = 0; i < water.Count(); i++)
             {
@@ -304,17 +266,15 @@ namespace project
                 }
                 if (!B.Contains(water[i]))
                 {
-                    water[i].UniformMatrix(shaderWave, camMatrix);
+                    water[i].PartialUniform(shaderWave, camMatrix);
                     Tile.UniformFloat(shaderWave, "time", totalframeCount);
-                    Tile.UniformVec3(shaderWave, "pos", water[i].centre);
+                    //Tile.UniformVec3(shaderWave, "pos", water[i].centre);
                     water[i].Draw(shaderWave);
                 }
             }
 
 
 
-
-            Tile[] notWater = Tile.Hexagons.Values.Where(x => x.type != pieces.Water).ToArray();
 
             for (int i = 0; i < notWater.Count(); i++)
             {
@@ -913,6 +873,21 @@ namespace project
 
                 //Give the matrix to the GPU
                 GL.UniformMatrix4(uniID, true, ref aproj);
+            }
+            public void PartialUniform(Shader SHADER, Matrix4 proj)
+            {
+                Matrix4 model = this.modelMat();
+                //get the model matrix
+
+                Matrix4 aproj = Matrix4.CreateScale(this.scale) * model;
+                //using matrix multiplication to apply the transformations
+
+                int uniID = GL.GetUniformLocation(SHADER.Handle, "projection");
+                int uni2ID = GL.GetUniformLocation(SHADER.Handle, "model");
+
+                //Give the matrix to the GPU
+                GL.UniformMatrix4(uniID, true, ref proj);
+                GL.UniformMatrix4(uni2ID, true, ref aproj);
             }
             static public void UniformFloat(Shader SHADER, string path, float f)
             {

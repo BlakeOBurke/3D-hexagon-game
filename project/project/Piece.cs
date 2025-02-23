@@ -111,6 +111,9 @@ namespace project
         public void TakeDamage(int damage, damageType Damage)
         {
             health -= damage;
+
+            Console.WriteLine($"{this.type} took {damage} damage, {this.type} health = {health}");
+
             if (!IsLive())
             {
                 Kill();
@@ -126,7 +129,8 @@ namespace project
         }
         public void Kill()
         {
-            throw new NotImplementedException();
+            Console.WriteLine($"{this.type} was destroyed");
+            Manager.pieces.Remove(this);
         }
         public void Display()
         {
@@ -197,6 +201,9 @@ namespace project
                 damage =(int)(damage*1/2);
             }
             health -= damage;
+
+            Console.WriteLine($"{this.type} took {damage} damage, {this.type} health = {health}");
+
             if (!IsLive())
             {
                 Kill();
@@ -212,6 +219,7 @@ namespace project
         }
         public void Kill()
         {
+            Console.WriteLine($"{this.type} was destroyed");
             Manager.pieces.Remove(this);
         }
         public void Display()
@@ -280,6 +288,9 @@ namespace project
                 damage = (int)(damage * 3 / 2);
             }
             health -= damage;
+
+            Console.WriteLine($"{this.type} took {damage} damage, {this.type} health = {health}");
+
             if (!IsLive())
             {
                 Kill();
@@ -295,6 +306,7 @@ namespace project
         }
         public void Kill()
         {
+            Console.WriteLine($"{this.type} was destroyed");
             Manager.pieces.Remove(this);
         }
         public void Display()
@@ -369,6 +381,9 @@ namespace project
                 damage = (int)(damage * 3/2);
             }
             health -= damage;
+
+            Console.WriteLine($"{this.type} took {damage} damage, {this.type} health = {health}");
+
             if (!IsLive())
             {
                 Kill();
@@ -384,6 +399,7 @@ namespace project
         }
         public void Kill()
         {
+            Console.WriteLine($"{this.type} was destroyed");
             Manager.pieces.Remove(this);
         }
         public void Display()
@@ -427,7 +443,7 @@ namespace project
         public armourType armour { get; set; } = armourType.Light;
         public damageType gunType { get; set; } = damageType.Bomb;
         public int moveSpeed { get; set; } = 3;
-        public int range { get; set; } = 0;
+        public int range { get; set; } = 1;
         public int team { get; set; }
 
         public int health { get; set; } = 0;
@@ -458,6 +474,9 @@ namespace project
                 damage = (int)(damage * 3/2);
             }
             health -= damage;
+
+            Console.WriteLine($"{this.type} took {damage} damage, {this.type} health = {health}");
+
             if (!IsLive())
             {
                 Kill();
@@ -473,6 +492,7 @@ namespace project
         }
         public void Kill()
         {
+            Console.WriteLine($"{this.type} was destroyed");
             Manager.pieces.Remove(this);
         }
         public void Display()
@@ -495,7 +515,7 @@ namespace project
         {
             return Manager.GetAttackable(this);
         }
-        public Bomber((int, int) position, int team = 0, int health = 50, int damage = 15)
+        public Bomber((int, int) position, int team = 0, int health = 50, int damage = 20)
         {
             this.shape = new Game.Shape("cube.obj", team == 0 ? Color.DarkBlue : Color.Red);
             this.shape.scale *= 7;
@@ -543,6 +563,9 @@ namespace project
                 damage = (int)(damage * 2);
             }
             health -= damage;
+
+            Console.WriteLine($"{this.type} took {damage} damage, {this.type} health = {health}");
+
             if (!IsLive())
             {
                 Kill();
@@ -558,6 +581,7 @@ namespace project
         }
         public void Kill()
         {
+            Console.WriteLine($"{this.type} was destroyed");
             Manager.pieces.Remove(this);
         }
         public void Display()
@@ -601,13 +625,9 @@ namespace project
         public static void setup()
         {
             //start stuff
-            //Tank A = new Tank((0,0),1);
-            //Tank B = new Tank((5,5),0);
 
-            //pieces.Add(A);
-            //pieces.Add(new AA_Gun((0,0),1));
+            pieces.Add(new Tank((0,0),0));
             pieces.Add(new Missile_Boat((0,0),0));
-            //pieces.Add(new Fighter((5,5),0));
             pieces.Add(new Bomber((5,5),1));
         }
         public static int currTeam = 0;
@@ -620,7 +640,9 @@ namespace project
             for (int i = 0; i < list.Count; i++)
             {
                 //try move
-
+                Console.WriteLine("----------");
+                Console.WriteLine($"{(list[i].team == 1 ? "Red" : "Blue")} {list[i].type}");
+                Console.WriteLine("health = " + list[i].health);
 
                 //get moves
                 List<(int, int)> moves = list[i].GetMoves();
@@ -628,7 +650,9 @@ namespace project
                 Game.DisplayMoves = moves.ToList();
 
                 Game.turnStatus = "move";
-                Thread.Sleep(50);
+
+                Console.WriteLine("select move");
+                Thread.Sleep(100);
                 while (true)
                 {
                     if(moves.Contains(Game.curHex) && Game.currentKey.IsKeyDown(Key.Enter))
@@ -645,14 +669,39 @@ namespace project
                 Game.DisplayMoves = attacks.ToList();
 
                 Game.turnStatus = "attack";
-                Thread.Sleep(50);
+                Thread.Sleep(100);
+                if (attacks.Count() != 0)
+                {
+                    Console.WriteLine("select target");
+                }
                 while (true && attacks.Count()!=0)
                 {
-                    if (attacks.Contains(Game.curHex) && Game.currentKey.IsKeyDown(Key.Enter))
+
+                    bool breaker = false;
+                    if (attacks.Contains(Game.curHex))
                     {
-                        list[i].attack(Game.curHex);
-                        break;
+                        breaker = false;
+                        Console.WriteLine();
+                        Console.WriteLine($"attack {pieces.Where(x => x.position == Game.curHex).FirstOrDefault().type}?");
+                        Console.WriteLine("press enter to attack");
+
+                        do
+                        {
+                            if (Game.currentKey.IsKeyDown(Key.Enter))
+                            {
+                                list[i].attack(Game.curHex);
+                                breaker = true;
+                            }
+                            else if(!attacks.Contains(Game.curHex))
+                            {
+                                break;
+                            }
+                        } while (!Game.currentKey.IsKeyDown(Key.Enter));
+
+                        if (breaker) break;
+
                     }
+
                     if (Game.currentKey.IsKeyDown(Key.BackSpace))
                     {
                         break;

@@ -8,13 +8,14 @@ out float Height;
 
 uniform mat4 projection;
 uniform float time;
-uniform vec3 pos;
 uniform vec3 HexCol;
+uniform mat4 model;
 
 void main()
 {
-    gl_Position = vec4(aPos+vec3(0,-sin((aPos.z+time+aPos.x)/80)*0.2+cos((aPos.x+aPos.z+time)/80)*0.2,0),1) * projection;
+    vec4 Result = vec4(aPos,1) * model;
+    gl_Position = vec4(aPos+vec3(0,-sin((Result.z+time+Result.x)/80)*0.2+cos((Result.x+Result.z+time)/80)*0.2,0),1) * model * projection;
     ourColor = HexCol; // set ourColor to the input color from the vertex data
     Time = time;
-    Height = -sin((aPos.z+time+pos.x)/80)*0.5+cos((aPos.x+pos.z+time)/80)*0.5;
+    Height = -sin((Result.z+time+Result.x)/80)*0.5+cos((Result.x+Result.z+time)/80)*0.5;
 }      
